@@ -1,0 +1,19 @@
+version 5.226.0
+
+framework: netcoreapp5.0
+
+
+group Main
+    storage: none
+    source https://api.nuget.org/v3/index.json
+
+    nuget FSharp.Core ~> 4.7
+    git https://github.com/fc1943s/Suigetsu.git master build: "powershell –ExecutionPolicy Bypass ./build.ps1"
+
+
+group Git2Pdf.Cli
+    storage: none
+    source https://api.nuget.org/v3/index.json
+
+    nuget PdfSharpCore.MigraDoc.Rendering ~> 1.50 prerelease
+
