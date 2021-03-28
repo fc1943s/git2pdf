@@ -10,12 +10,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "repo", "repo", "{0F42A31E-8
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ext", "ext", "{D489FD70-6DA7-481A-A6A9-EADB53A7BF20}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Suigetsu.CoreCLR", "paket-files\github.com\fc1943s\Suigetsu\src\Suigetsu.CoreCLR\Suigetsu.CoreCLR.fsproj", "{165CDE2E-F51B-451F-8623-639C5ECC2FC2}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Suigetsu.Core", "paket-files\github.com\fc1943s\Suigetsu\src\Suigetsu.Core\Suigetsu.Core.fsproj", "{6FFB9F19-62C2-4D04-B1B1-449AEDE94398}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,17 +20,7 @@ Global
 		{012C3C0B-9F1D-43A3-84C9-A365107BFD1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{012C3C0B-9F1D-43A3-84C9-A365107BFD1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{012C3C0B-9F1D-43A3-84C9-A365107BFD1B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{165CDE2E-F51B-451F-8623-639C5ECC2FC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{165CDE2E-F51B-451F-8623-639C5ECC2FC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{165CDE2E-F51B-451F-8623-639C5ECC2FC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{165CDE2E-F51B-451F-8623-639C5ECC2FC2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6FFB9F19-62C2-4D04-B1B1-449AEDE94398}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6FFB9F19-62C2-4D04-B1B1-449AEDE94398}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6FFB9F19-62C2-4D04-B1B1-449AEDE94398}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6FFB9F19-62C2-4D04-B1B1-449AEDE94398}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{165CDE2E-F51B-451F-8623-639C5ECC2FC2} = {D489FD70-6DA7-481A-A6A9-EADB53A7BF20}
-		{6FFB9F19-62C2-4D04-B1B1-449AEDE94398} = {D489FD70-6DA7-481A-A6A9-EADB53A7BF20}
 	EndGlobalSection
 EndGlobal
