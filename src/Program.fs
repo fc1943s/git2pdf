@@ -3,15 +3,15 @@
 open Argu
 open System
 open System.Text
+open Git2Pdf.Cli.Core
 open MigraDoc.DocumentObjectModel
 open MigraDoc.Rendering
 
 
 module Git2Pdf =
-    let runCmdIoAsync repoPath cmd =
+    let runCmdIoAsync dir exe arguments =
         async {
-            let cmd = [ "cd " + repoPath ] @ cmd
-            let! errorCode, result = Runtime.executePowerShellAsync cmd
+            let! errorCode, result = Runtime.executeBinaryInteropAsync dir exe arguments
 
             return
                 match errorCode with
@@ -19,34 +19,40 @@ module Git2Pdf =
                 | _ -> None
         }
 
-    let getCommitLogsIoAsync repoPath (commitList: string) =
+    let getCommitLogsIoAsync repoPath commitList =
         async {
             return!
-                commitList.Split Environment.NewLine
+                commitList
                 |> Array.rev
                 |> Array.map
                     (fun commit ->
-                        runCmdIoAsync
-                            repoPath
-                            [ "git log -1 "
-                              + commit
-                              + """ --pretty="%ci%n%H - %h%n%n%n%B" """ ])
-                |> Async.throttle 4
-                |> Async.Sequential
+                        runCmdIoAsync repoPath "git" $""" log -1 {commit} --pretty="%%ci%%n%%H - %%h%%n%%n%%n%%B%%n" """)
+                |> Seq.toArray
+                |> Async.throttle 8
+                |> Async.Parallel
                 |> Async.choose Array.choose
         }
 
     let savePdfIo commitLogs (outputPath: string) =
-        let document = Document()
-        let section = document.AddSection()
+        let document = Document ()
+        let section = document.AddSection ()
 
-        for log in commitLogs do
-            section.AddParagraph log |> ignore
-            section.AddPageBreak()
+        let id = ((string (Guid.NewGuid ())).Split "-").[0]
+
+        printfn $"!{id}: lines start"
+
+        for row in commitLogs do
+            section.AddParagraph row |> ignore
+            section.AddParagraph "</>" |> ignore
+            printfn $"!{id}: paragraph: {row}"
+            section.AddPageBreak ()
+            printfn $"!{id}: page break"
+
+        printfn $"!{id}: lines end"
 
         let pdfRenderer = PdfDocumentRenderer true
         pdfRenderer.Document <- document
-        pdfRenderer.RenderDocument()
+        pdfRenderer.RenderDocument ()
         pdfRenderer.PdfDocument.Save outputPath
 
     let startIoAsync (branch: string) (repoPath: string) (outputPath: string) (since: string) =
@@ -56,18 +62,21 @@ module Git2Pdf =
             let! commitList =
                 runCmdIoAsync
                     repoPath
-                    [ $"""git rev-list {branch} {
-                                                     match since with
-                                                     | "" -> ""
-                                                     | since -> $"--since={since}"
-                      }""" ]
+                    "git"
+                    $""" rev-list {branch} {match since with
+                                            | "" -> ""
+                                            | since -> $"--since={since}"} """
 
             match commitList with
             | None -> eprintfn "Error retrieving commit list"
 
             | Some commitList ->
                 let! commitLogs = getCommitLogsIoAsync repoPath commitList
-                savePdfIo commitLogs outputPath
+
+                savePdfIo
+                    (commitLogs
+                     |> Array.map (String.concat Environment.NewLine))
+                    outputPath
         }
 
 module Args =
