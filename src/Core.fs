@@ -12,6 +12,7 @@ open Argu
 
 [<AutoOpen>]
 module Core =
+    let nl = Environment.NewLine
 
     [<AutoOpen>]
     module Extensions =
@@ -135,7 +136,7 @@ module Core =
         let hasMatch (text, pattern) = matchAll(text, pattern).Count > 0
 
     module Runtime =
-//        type CommandType =
+        //        type CommandType =
 //            | Shell of commands: string list
 //            | Binary of dir: string * exe: string * arguments: string
 //

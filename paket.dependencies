@@ -8,3 +8,4 @@ source https://api.nuget.org/v3/index.json
 nuget FSharp.Core ~> 5.0
 nuget PdfSharpCore.MigraDoc.Rendering ~> 1.50 prerelease
 nuget Argu ~> 6.1
+nuget LibGit2Sharp ~> 0.27 prerelease

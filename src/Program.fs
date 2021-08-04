@@ -4,12 +4,13 @@ open Argu
 open System
 open System.Text
 open Git2Pdf.Cli.Core
+open LibGit2Sharp
 open MigraDoc.DocumentObjectModel
 open MigraDoc.Rendering
 
 
 module Git2Pdf =
-    let runCmdIoAsync dir exe arguments =
+    let runCmd dir exe arguments =
         async {
             let! errorCode, result = Runtime.executeBinaryInteropAsync dir exe arguments
 
@@ -19,19 +20,26 @@ module Git2Pdf =
                 | _ -> None
         }
 
-    let getCommitLogsIoAsync repoPath commitList =
-        async {
-            return!
-                commitList
-                |> Array.rev
-                |> Array.map
-                    (fun commit ->
-                        runCmdIoAsync repoPath "git" $""" log -1 {commit} --pretty="%%ci%%n%%H - %%h%%n%%n%%n%%B%%n" """)
-                |> Seq.toArray
-                |> Async.throttle 8
-                |> Async.Parallel
-                |> Async.choose Array.choose
-        }
+    let getCommitLogs repoPath branchName months =
+        use repo = new Repository (repoPath)
+
+        printfn $"getCommitLogs repoPath={repoPath} branchName={branchName} months={months}"
+
+        match branchName with
+        | Some branchName ->
+            repo.Branches
+            |> Seq.tryFind (fun branch -> branch.RemoteName = branchName)
+            |> Option.map (fun branch -> branch.Commits |> Seq.rev)
+            |> Option.defaultValue Seq.empty
+        | None -> repo.Commits |> Seq.rev
+        |> Seq.filter
+            (fun commit ->
+                match months with
+                | None -> true
+                | Some months when commit.Committer.When.DateTime > DateTime.Now.AddDays -(float months * 30.) -> true
+                | _ -> false)
+        |> Seq.map (fun commit -> $"{commit.Committer.When.DateTime} - {commit.Sha}{nl}{nl}{nl}{commit.Message}")
+        |> Seq.toList
 
     let savePdfIo commitLogs (outputPath: string) =
         let document = Document ()
@@ -55,54 +63,38 @@ module Git2Pdf =
         pdfRenderer.RenderDocument ()
         pdfRenderer.PdfDocument.Save outputPath
 
-    let startIoAsync (branch: string) (repoPath: string) (outputPath: string) (since: string) =
+    let start repoPath branchName outputPath months =
         async {
             Encoding.RegisterProvider CodePagesEncodingProvider.Instance
+            let commitLogs = getCommitLogs repoPath branchName months
 
-            let! commitList =
-                runCmdIoAsync
-                    repoPath
-                    "git"
-                    $""" rev-list {branch} {match since with
-                                            | "" -> ""
-                                            | since -> $"--since={since}"} """
-
-            match commitList with
-            | None -> eprintfn "Error retrieving commit list"
-
-            | Some commitList ->
-                let! commitLogs = getCommitLogsIoAsync repoPath commitList
-
-                savePdfIo
-                    (commitLogs
-                     |> Array.map (String.concat Environment.NewLine))
-                    outputPath
+            savePdfIo (commitLogs |> Seq.toArray) outputPath
         }
 
 module Args =
     type Arguments =
         | [<Mandatory>] Repo_Path of string
-        | [<Mandatory>] Branch of string
         | [<Mandatory>] Output_Path of string
-        | Since of string
+        | Branch of string
+        | Months of int
         interface IArgParserTemplate with
             member this.Usage =
                 match this with
                 | Repo_Path _ -> "Path of the repository."
                 | Branch _ -> "Branch name."
                 | Output_Path _ -> "Full path of the PDF file."
-                | Since _ -> "Initial date according to git-rev-list formatting e.g. '4.months.ago'."
+                | Months _ -> "Last X months."
 
 module Program =
     [<EntryPoint>]
     let main argv =
         let args = Startup.parseArgsIo argv
 
-        Git2Pdf.startIoAsync
-            (args.GetResult Args.Branch)
+        Git2Pdf.start
             (args.GetResult Args.Repo_Path)
+            (args.TryGetResult Args.Branch)
             (args.GetResult Args.Output_Path)
-            (args.GetResult Args.Since)
+            (args.TryGetResult Args.Months)
         |> Async.RunSynchronously
 
         0
